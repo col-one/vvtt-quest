@@ -22,7 +22,6 @@ class SwitchInventoryPushBtn(core.BaseGameObject):
 
 
 class Inventory(core.BaseGameObject):
-    objects = core.OrderedSet()
     ui_marge = 10
     ui_font_h = 7
     ui_font_w = 3
@@ -37,7 +36,10 @@ class Inventory(core.BaseGameObject):
         # core.BaseGame.level_manager.active_level.register.change_layer(self, core.Layer.FOREGROUND)
 
     def update(self):
-        if len(self.objects) == 0:
+        if len(core.BaseGame.heroes[0].inventory_objects) == 0:
+            self.empty_txt.active = True
+        else:
+            self.empty_txt.txt = f"{len(core.BaseGame.heroes[0].inventory_objects)} trucs dans ton sac"
             self.empty_txt.active = True
 
     def draw(self):

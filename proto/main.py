@@ -9,16 +9,32 @@ import inventory, props
 
 
 class DogPropsCollider(collider.Collider):
+    def update(self):
+        super().update()
+        self.w = self.parent.action.current.w - 15
+        self.h = self.parent.action.current.h
+        if self.w <= 32:
+            self._x = 16
+            self._y = 0
+            self.w = self.parent.action.current.w
+        else:
+            self._x = 7
+            self._y = 4
+
     def logic(self, obj):
-        print(f"Walk on Props : {obj.name}")
-        core.BaseGame.destroy(obj.parent)
+        if pyxel.frame_count > 0:
+            print(f"Walk on Props : {obj.parent.name} {obj.parent.x}")
+            core.BaseGame.heroes[0].inventory_objects.add(obj.parent)
+            core.BaseGame.instance.run_at_end.add((self.overlap.remove, obj))
+            obj.parent.active = False
 
 
 def Dog():
     dog = dog_actor.Dog()
     dog.x = 100
     dog.y = 100
-    dog_props_collider = DogPropsCollider(8, 5, 50, 24, debug=True)
+    dog.inventory_objects = core.OrderedSet()
+    dog_props_collider = DogPropsCollider(7, 4, 45, 24, debug=True)
     dog_props_collider.subtype = props.Props
     dog_props_collider.parent_to(dog)
 
@@ -39,8 +55,10 @@ class Game(core.BaseGame, pyxel=pyxel, w=256, h=224, cls_color=1):
             dog = Dog()
 
             for i in range(0, 4):
-                props.Rect()
-                props.Circle()
+                a = props.Rect()
+                a.name = f'rec-{i}'
+                a = props.Circle()
+                a.name = f'rec-{i}'
 
         with self.level_manager.new_level('inventory'):
             self.level_manager.add_instance_object(swt)
