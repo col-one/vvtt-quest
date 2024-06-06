@@ -43,6 +43,7 @@ class ObjectBrowser(core.BaseGameObject):
     def __init__(self, ctrl):
         self.ctrl = ctrl
         self.active_id = 0
+        self.object_id = 0
         self.last_active_id = -1
         self.cursor_x = 0
         self.cursor_y = 0
@@ -56,26 +57,31 @@ class ObjectBrowser(core.BaseGameObject):
         self.active_objects = core.OrderedSet()
         self.ready_to_display_copy = False
         self.active_object_for_view = None
+        self.need_update = False
 
-    def reload(self):
+        self.clone_object = None
+        self.active_range = [0, 5]
+
+    def populate(self):
+        self.active_objects = self.objects[self.active_range[0]: self.active_range[1]]
         i = 0
-        for o in self.objects:
+        for o in self.active_objects:
             if o not in core.BaseGame.level_manager.levels['inventory'].register.all:
+                # destroy collider
+                core.BaseGame.destroy(o.children[0])
                 core.BaseGame.level_manager.add_instance_object(o)
                 self.ctrl.previous_lvl.register.remove(o)
+
+    def draw_active_object(self):
+        i = 0
+        for o in self.active_objects:
             o.active = True
             o.size = 'middle'
             o.y = self.y
             o.x = self.x + i * (o.middle_w + self.marge)
-            self.active_objects.add(o)
-            # destroy collider
-            core.BaseGame.destroy(o.children[0])
             i += 1
-            if i == self.display_max_objects:
-                break
 
     def prepare_view(self):
-        print("prepare_view")
         obj = self.active_objects[self.active_id]
         core.BaseGame.copy(obj)
         self.ready_to_display_copy = True
@@ -83,22 +89,55 @@ class ObjectBrowser(core.BaseGameObject):
     def active_view(self):
         obj2 = core.BaseGame.instance.get_last_copy()
         if obj2 is not None:
+            if self.clone_object:
+                core.BaseGame.destroy(self.clone_object)
             self.active_object_for_view = obj2
+            self.clone_object = obj2
+
+    def manage_active_queue(self):
+        new_id = self.active_id + self.browser_ctrl.direction
+        if 0 <= new_id < len(self.active_objects):
+            self.active_id = new_id
+        if len(self.active_objects) <= new_id < len(self.objects):
+            if self.active_range[1] + 1 > len(self.objects):
+                return
+            for o in self.active_objects:
+                o.active = False
+            self.active_range[0] += 1
+            self.active_range[1] += 1
+            self.active_id = len(self.active_objects) - 1
+            self.populate()
+            self.draw_active_object()
+            self.need_update = True
+        if new_id < 0:
+            if self.active_range[0] - 1 < 0:
+                return
+            self.active_range[0] -= 1
+            self.active_range[1] -= 1
+            self.active_id = 0
+            self.populate()
+            self.draw_active_object()
+            self.need_update = True
 
     def update(self):
         if self.active_objects:
-            self.active_id = (self.active_id + self.browser_ctrl.direction) % len(self.active_objects)
+            self.manage_active_queue()
             self.cursor_x = self.active_objects[self.active_id].x - 1
             self.cursor_y = self.active_objects[self.active_id].y - 1
-            if self.active_id != self.last_active_id:
+            if self.active_id != self.last_active_id or self.need_update:
                 self.prepare_view()
             if self.ready_to_display_copy:
                 self.active_view()
             self.last_active_id = self.active_id
+            self.need_update = False
 
     def draw(self):
         if self.active_objects:
             pyxel.rectb(self.cursor_x, self.cursor_y, self.cursor_w, self.cursor_h, col=1)
+            if self.active_range[1] < len(self.objects):
+                pyxel.rectb(self.active_objects[-1].x + 32 + 8, self.active_objects[-1].y + 13, 5, 5, col=1)
+            if self.active_range[0] != 0:
+                pyxel.rectb(self.active_objects[0].x - 12, self.active_objects[0].y + 13, 5, 5, col=1)
 
 
 class Inventory(core.BaseGameObject):
@@ -120,7 +159,7 @@ class Inventory(core.BaseGameObject):
         self.last_object_count = 0
 
         self.object_browser = ObjectBrowser(self.ctrl)
-        self.object_browser.x = self.ui_marge * 2.6
+        self.object_browser.x = self.ui_marge * 2.8
         self.object_browser.y = core.BaseGame.instance.h * 0.72
 
     def update(self):
@@ -129,7 +168,8 @@ class Inventory(core.BaseGameObject):
         else:
             if len(core.BaseGame.heroes[0].inventory_objects) != self.last_object_count:
                 print("update inventory")
-                self.object_browser.reload()
+                self.object_browser.populate()
+                self.object_browser.draw_active_object()
                 self.last_object_count = len(core.BaseGame.heroes[0].inventory_objects)
         if self.object_browser.active_object_for_view:
             obj = self.object_browser.active_object_for_view

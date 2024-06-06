@@ -15,7 +15,10 @@ class Game(core.BaseGame, pyxel=pyxel, w=256, h=224, cls_color=1):
         color.load_palette(f'{Path(__file__).parent}/resources/palette.hex')
         pyxel.images[0].load(0, 0, f'{Path(__file__).parent}/resources/walk.png')
 
+        core.BaseGame.instance.controllers = core.OrderedSet()
+
         swt = inventory.SwitchInventoryPushBtn(self)
+        core.BaseGame.instance.controllers.add(swt)
 
         with self.level_manager.new_level('rt1'):
             self.level_manager.add_instance_object(swt)

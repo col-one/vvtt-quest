@@ -2,7 +2,7 @@ import random
 
 import pyxel
 
-from pyxelutils.pyxelutils import core, collider
+from pyxelutils.pyxelutils import core, collider, text
 
 
 class PropsCollider(collider.Collider):
@@ -17,11 +17,18 @@ class Props(core.BaseGameObject):
     def draw(self):
         pass
 
+    @staticmethod
+    def text(txt):
+        text.InRect(10, core.BaseGame.instance.h - 50, core.BaseGame.instance.w - 20, 40, txt, col=0)
+
+    def launch_dialog(self):
+        core.BaseGame.instance.run_at_end.add((self.text, self.pickup_txt))
+
 
 class Rect(Props):
     def __init__(self):
         self.x = random.randint(10, core.BaseGame.instance.w - 10)
-        self.y = random.randint(10, core.BaseGame.instance.h - 10)
+        self.y = random.randint(10, core.BaseGame.instance.h - 50)
         self.col = PropsCollider(0, 0, 7, 7, debug=False)
         self.col.parent_to(self)
         self.small_w = 5
@@ -36,7 +43,8 @@ class Rect(Props):
         self.w = self.small_w
         self.h = self.small_h
 
-        self.desc_txt = 'Un carre qui servira surement a caller une table'
+        self.desc_txt = f'Un carre {self.color} qui servira surement a caller une table'
+        self.pickup_txt = f'Hum... on dirait un simple carre {self.color} qui traine au sol, il est boueux mais encore solide'
 
     def draw(self):
             pyxel.rect(self.x, self.y, self.w, self.h, col=self.color)
