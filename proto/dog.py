@@ -3,7 +3,7 @@ import pyxel
 from pyxelutils.pyxelutils import core, collider, text
 from pyxelutils.pyxelutils.examples import dog_actor
 
-import props
+import props, dialog
 
 
 class DogPropsCollider(collider.Collider):
@@ -20,14 +20,15 @@ class DogPropsCollider(collider.Collider):
             self._x = 7
             self._y = 4
 
-    def logic(self, obj):
+    def logic(self, prop_c):
         if pyxel.frame_count > 0:
-            print(f"Walk on Props : {obj.parent.name} {obj.parent.x}")
-            obj.parent.launch_dialog()
-            core.BaseGame.instance.run_at_end.add((self.overlap.remove, obj))
+            print(f"Walk on Props : {prop_c.parent.name} {prop_c.parent.x}")
+            core.BaseGame.instance.run_at_end.add((self.overlap.remove, prop_c))
+            core.BaseGame.instance.run_at_end.add((core.BaseGame.instance.dialog.pop, prop_c.parent.pickup_txt))
+            core.BaseGame.instance.run_at_end.add((core.BaseGame.instance.dialog.ask, "Prendre ?"))
             # core.BaseGame.heroes[0].inventory_objects.add(obj.parent)
             # obj.parent.active = False
-            obj.active = False
+            prop_c.active = False
 
             self.parent.action.ctrl.direction = [0, 0]
             for k in core.BaseGame.instance.controllers:
