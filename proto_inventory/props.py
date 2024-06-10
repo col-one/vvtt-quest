@@ -44,7 +44,7 @@ class Rect(Props):
         self.h = self.small_h
 
         self.desc_txt = f'Un carre {self.color} qui servira surement a caller une table'
-        self.pickup_txt = f'Hum... on dirait un simple carre {self.color} qui traine au sol, il est boueux mais encore solide'
+        self.pickup_txt = f'Hum... on dirait un simple carre {self.color}'
 
     def draw(self):
             pyxel.rect(self.x, self.y, self.w, self.h, col=self.color)

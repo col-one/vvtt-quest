@@ -39,7 +39,16 @@ class Game(core.BaseGame, pyxel=pyxel, w=256, h=224, cls_color=1):
             inv = inventory.Inventory(swt)
 
         self.level_manager.active_level = self.level_manager.levels['rt1']
+
+        self.instance.run_at_end_with_delay((print, "CCACACACA DELAYED"), delay=10)
+
         self.run_game()
+
+    @staticmethod
+    def pause():
+        for k in core.BaseGame.instance.controllers:
+            print(f"Ctrl : {not k.active}")
+            k.active = not k.active
 
 
 if __name__ == '__main__':

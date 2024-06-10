@@ -23,16 +23,26 @@ class DogPropsCollider(collider.Collider):
     def logic(self, prop_c):
         if pyxel.frame_count > 0:
             print(f"Walk on Props : {prop_c.parent.name} {prop_c.parent.x}")
-            core.BaseGame.instance.run_at_end.add((self.overlap.remove, prop_c))
+            prop_c.active = False
+            core.BaseGame.instance.dialog.post_function = self.post_function
             core.BaseGame.instance.run_at_end.add((core.BaseGame.instance.dialog.pop, prop_c.parent.pickup_txt))
             core.BaseGame.instance.run_at_end.add((core.BaseGame.instance.dialog.ask, "Prendre ?"))
-            # core.BaseGame.heroes[0].inventory_objects.add(obj.parent)
-            # obj.parent.active = False
-            prop_c.active = False
+            core.BaseGame.instance.dialog.post_args.add(prop_c)
 
             self.parent.action.ctrl.direction = [0, 0]
-            for k in core.BaseGame.instance.controllers:
-                k.active = False
+            core.BaseGame.instance.pause()
+
+    @staticmethod
+    def post_function(args):
+        prop_c, answer = args
+        print("Calling post function")
+        core.BaseGame.instance.pause()
+        if answer is True:
+            core.BaseGame.heroes[0].inventory_objects.add(prop_c.parent)
+            prop_c.parent.active = False
+        else:
+            core.BaseGame.run_at_end_with_delay((prop_c.activate, True), delay=10)
+        core.BaseGame.instance.dialog.post_args.clear()
 
 
 def Dog():
